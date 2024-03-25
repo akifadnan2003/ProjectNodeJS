@@ -1,12 +1,14 @@
 const express = require('express');
 const { Pool } = require('pg');
+const dotenv = require('dotenv');   // Import dotenv module to read .env file
+dotenv.config();    // Read .env file
 
 const pool = new Pool({
     host: "localhost",
-    user: "user",
+    user: process.env.DBUSER,
     port: 5432,
-    password: "pw",
-    database: "your_new_database"
+    password: process.env.DBPASS,
+    database: "database5"
 });
 
 const app = express();
@@ -78,7 +80,7 @@ app.delete('/students/:id', async (req, res) => {
 app.get('/departments', async (req, res) => {
     const client = await pool.connect();
     try {
-        const result = await client.query('SELECT * FROM schema3."Bölüm";');
+        const result = await client.query('SELECT * FROM bölüm."Bölüm";');
         res.json(result.rows);
     } catch (err) {
         console.error('Error executing query', err.stack);
