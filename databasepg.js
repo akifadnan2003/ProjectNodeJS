@@ -1,8 +1,10 @@
 const { Pool } = require('pg');
+const dotenv = require('dotenv');   // Import dotenv module to read .env file
+dotenv.config();    // Read .env file
 
 const pool = new Pool({
     host: "localhost",
-    user: process.env.DBUSER, //mine was "postgres" if it is default
+    user: process.env.DBUSER,
     port: 5432,
     password: process.env.DBPASS,
     database: "postgres"
@@ -27,9 +29,9 @@ pool.connect((err, client, release) => {
         // Connect to the new database
         const newPool = new Pool({
             host: "localhost",
-            user: "postgres",
+            user: process.env.DBUSER,
             port: 5432,
-            password: "password",
+            password: process.env.DBPASS,
             database: "database5"
         });
 
