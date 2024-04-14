@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
-const dotenv = require('dotenv');   // Import dotenv module to read .env file
-dotenv.config();    // Read .env file
+const dotenv = require('dotenv');
+dotenv.config();
 
-const pool = new Pool({
-    host: "localhost",
+const pool = new Pool({ // Assign to the top-level pool variable
+    host: process.env.DBHOST,
     user: process.env.DBUSER,
-    port: 5432,
+    port: process.env.DBPORT,
     password: process.env.DBPASS,
     database: process.env.DBNAME
 });
