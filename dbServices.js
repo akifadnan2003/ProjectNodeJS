@@ -1,11 +1,11 @@
 const { Pool } = require('pg');
-const dotenv = require('dotenv');
-dotenv.config();
+const dotenv = require('dotenv');   // Import dotenv module to read .env file
+dotenv.config();    // Read .env file
 
-const pool = new Pool({ // Assign to the top-level pool variable
-    host: process.env.DBHOST,
+const pool = new Pool({
+    host: "localhost",
     user: process.env.DBUSER,
-    port: process.env.DBPORT,
+    port: 5432,
     password: process.env.DBPASS,
     database: process.env.DBNAME
 });
@@ -26,15 +26,30 @@ exports.getAllStudents = async (res) => {
 
 // Add a new student
 exports.addStudent = async (req, res) => {
-    const { name, email, deptid, counter } = req.body;
+    const { name, email, deptid } = req.body;
     const client = await pool.connect();
     try {
         // Check if a student with the same email already exists
-        const result = await client.query('SELECT * FROM Öğrenci."Öğrenci" WHERE email = $1;', [email]);
+        const result = await client.query('SELECT * FROM "Öğrenci"."Öğrenci" WHERE email = $1;', [email]);
         if (result.rows.length > 0) {
             res.status(400).json({ message: 'A student with this email already exists' });
         } else {
-            await client.query('INSERT INTO Öğrenci."Öğrenci" (name, email, deptid, counter) VALUES ($1, $2, $3, $4);', [name, email, deptid, counter]);
+            // Öğrenci eklenmeden önce sayaç değerini al
+            const countResult = await client.query('SELECT sayac FROM ogrenci_sayacideneme1.ogrenci_sayacdeneme');
+            console.log(countResult);
+            let counter = 0;
+            if (countResult.rows.length > 0) {
+                counter = countResult.rows[0].sayac;
+            }
+
+            counter = countResult.rows[0].sayac;
+
+            // Öğrenciyi ekle
+            await client.query('INSERT INTO "Öğrenci"."Öğrenci" (name, email, deptid, counter) VALUES ($1, $2, $3, $4);', [name, email, deptid, counter]);
+
+            // Sayaç değerini arttır
+            await client.query('UPDATE ogrenci_sayacideneme1.ogrenci_sayacdeneme SET sayac = sayac + 1');
+
             res.status(201).json({ message: 'Student added successfully' });
         }
     } catch (err) {
@@ -44,6 +59,7 @@ exports.addStudent = async (req, res) => {
         client.release();
     }
 }
+
 
 // Update a student
 exports.updateStudentByID = async (req, res) => {
@@ -79,6 +95,23 @@ exports.deleteStudentByID = async (req, res) => {
         } else {
         await client.query('DELETE FROM Öğrenci."Öğrenci" WHERE id = $1;', [id]);
         res.json({ message: 'Student deleted successfully' });
+
+        // Öğrenci eklenmeden önce sayaç değerini al
+        const countResult = await client.query('SELECT sayac FROM ogrenci_sayacideneme1.ogrenci_sayacdeneme');
+        console.log(countResult);
+        let counter = 0;
+        if (countResult.rows.length > 0) {
+            counter = countResult.rows[0].sayac;
+        }
+
+        counter = countResult.rows[0].sayac;
+
+        // Sayaç değerini azalt
+        await client.query('UPDATE ogrenci_sayacideneme1.ogrenci_sayacdeneme SET sayac = sayac - 1');
+
+        res.status(201).json({ message: 'Student deleted successfully' });
+
+
         }
     } catch (err) {
         console.error('Error executing query', err.stack);
