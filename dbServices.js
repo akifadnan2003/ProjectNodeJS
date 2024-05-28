@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const moment = require('moment');
 const dotenv = require('dotenv');   // Import dotenv module to read .env file
 dotenv.config();    // Read .env file
 
@@ -44,8 +45,18 @@ exports.addStudent = async (req, res) => {
 
             counter = countResult.rows[0].sayac;
 
+
             // Öğrenciyi ekle
+            const createdAt = moment().format();
+            const updatedAt = moment().format();
+            await client.query('INSERT INTO "Öğrenci"."Öğrenci" (name, email, deptid, counter, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6);', [name, email, deptid, counter, createdAt, updatedAt]);
+
+
+            /* Öğrenciyi ekle
             await client.query('INSERT INTO "Öğrenci"."Öğrenci" (name, email, deptid, counter) VALUES ($1, $2, $3, $4);', [name, email, deptid, counter]);
+            */
+
+
 
             // Sayaç değerini arttır
             await client.query('UPDATE ogrenci_sayacideneme1.ogrenci_sayacdeneme SET sayac = sayac + 1');
@@ -60,7 +71,6 @@ exports.addStudent = async (req, res) => {
     }
 }
 
-
 // Update a student
 exports.updateStudentByID = async (req, res) => {
     const { name, email, deptid, counter } = req.body;
@@ -72,7 +82,8 @@ exports.updateStudentByID = async (req, res) => {
         if (result.rows.length === 0) {
             res.status(404).json({ message: 'No student found with this ID' });
         } else {
-            await client.query('UPDATE Öğrenci."Öğrenci" SET name = $1, email = $2, deptid = $3, counter = $4 WHERE id = $5;', [name, email, deptid, counter, id]);
+            const updatedAt = moment().format();
+            await client.query('UPDATE Öğrenci."Öğrenci" SET name = $1, email = $2, deptid = $3, counter = $4, updated_at = $5 WHERE id = $6;', [name, email, deptid, counter, updatedAt, id]);
             res.json({ message: 'Student updated successfully' });
         }
     } catch (err) {
@@ -93,25 +104,22 @@ exports.deleteStudentByID = async (req, res) => {
         if (result.rows.length === 0) {
             res.status(404).json({ message: 'No student found with this ID' });
         } else {
-        await client.query('DELETE FROM Öğrenci."Öğrenci" WHERE id = $1;', [id]);
-        res.json({ message: 'Student deleted successfully' });
+            await client.query('DELETE FROM Öğrenci."Öğrenci" WHERE id = $1;', [id]);
 
-        // Öğrenci eklenmeden önce sayaç değerini al
-        const countResult = await client.query('SELECT sayac FROM ogrenci_sayacideneme1.ogrenci_sayacdeneme');
-        console.log(countResult);
-        let counter = 0;
-        if (countResult.rows.length > 0) {
+            // Öğrenci eklenmeden önce sayaç değerini al
+            const countResult = await client.query('SELECT sayac FROM ogrenci_sayacideneme1.ogrenci_sayacdeneme');
+            console.log(countResult);
+            let counter = 0;
+            if (countResult.rows.length > 0) {
+                counter = countResult.rows[0].sayac;
+            }
+
             counter = countResult.rows[0].sayac;
-        }
 
-        counter = countResult.rows[0].sayac;
+            // Sayaç değerini azalt
+            await client.query('UPDATE ogrenci_sayacideneme1.ogrenci_sayacdeneme SET sayac = sayac - 1');
 
-        // Sayaç değerini azalt
-        await client.query('UPDATE ogrenci_sayacideneme1.ogrenci_sayacdeneme SET sayac = sayac - 1');
-
-        res.status(201).json({ message: 'Student deleted successfully' });
-
-
+            res.status(201).json({ message: 'Student deleted successfully' });
         }
     } catch (err) {
         console.error('Error executing query', err.stack);
@@ -120,7 +128,6 @@ exports.deleteStudentByID = async (req, res) => {
         client.release();
     }
 }
-
 // Get all departments
 exports.getAllDepartments = async (res) => {
     const client = await pool.connect();
@@ -145,7 +152,9 @@ exports.addDepartment = async (req, res) => {
         if (result.rows.length > 0) {
             res.status(400).json({ message: 'A department with this name already exists' });
         } else {
-            await client.query('INSERT INTO Bölüm."Bölüm" (name, dept_std_id) VALUES ($1, $2);', [name, dept_std_id]);
+            const createdAt = moment().format();
+            const updatedAt = moment().format();
+            await client.query('INSERT INTO Bölüm."Bölüm" (name, dept_std_id, created_at, updated_at) VALUES ($1, $2, $3, $4);', [name, dept_std_id, createdAt, updatedAt]);
             res.status(201).json({ message: 'Department added successfully' });
         }
     } catch (err) {
@@ -167,7 +176,8 @@ exports.updateDepartmentByID = async (req, res) => {
         if (result.rows.length === 0) {
             res.status(404).json({ message: 'No department found with this ID' });
         } else {
-            await client.query('UPDATE Bölüm."Bölüm" SET name = $1, dept_std_id = $2 WHERE id = $3;', [name, dept_std_id, id]);
+            const updatedAt = moment().format();
+            await client.query('UPDATE Bölüm."Bölüm" SET name = $1, dept_std_id = $2, updated_at = $3 WHERE id = $4;', [name, dept_std_id, updatedAt, id]);
             res.json({ message: 'Department updated successfully' });
         }
     } catch (err) {
